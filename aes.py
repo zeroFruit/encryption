@@ -1,15 +1,16 @@
-from Crypto.Cipher import DES
+from Crypto.Cipher import AES
+from Crypto import Random
 import binascii
 
-# we can use the DES algorithm like this
+# we can use the AES algorithm like this
 # there are several modes (7 modes)
-# 1.) ECB: "Electronic Code Book" -> we use DES on every 64 bits long plaintext block
-#           these blocks are independent of each other so we use DES separately on every block
+# 1.) ECB: "Electronic Code Book" -> we use AES on every 128 bits long plaintext block
+#           these blocks are independent of each other so we use AES separately on every block
 # 2.) CBC: "Cipher Block Chain" -> uses a chaining mechanism that causes
 #           the decryption of a block of ciphertext to depend on all the preceding ciphertext blocks
 # 
 # THE PADDING PROBLEM
-#   DES algorithm uses 64 bits long input: what is the plaintext is not divisible by 64?
+#   AES algorithm uses 128 bits long input: what is the plaintext is not divisible by 128?
 #       - in these cases we append some extra bits to the plaintext to be able to split
 #           the plaintext into 64 bits long chunks
 #
@@ -19,12 +20,12 @@ import binascii
 #       - we can use CMS "Cryptographic Message Syntax" ... pad with bytes all of the same value as the number of padding styles  
 #
 
-def append_space_padding(str, blocksize=64):
+def append_space_padding(str, blocksize=128):
     pad_len = blocksize - (len(str) % blocksize)
     padding = 'a'*pad_len
     return str + padding
 
-def remove_space_padding(str, blocksize=64):
+def remove_space_padding(str, blocksize=128):
     pad_len = 0
 
     for char in str[::-1]:
@@ -36,19 +37,23 @@ def remove_space_padding(str, blocksize=64):
     return str[:-pad_len]
 
 def encrypt(plaintext, key):
-    des = DES.new(key, DES.MODE_ECB)
-    return des.encrypt(plaintext)
+    aes = AES.new(key, AES.MODE_ECB)
+    return aes.encrypt(plaintext)
 
 def decrypt(ciphertext, key):
-    des = DES.new(key, DES.MODE_ECB)
-    return des.decrypt(ciphertext).decode('UTF-8')
+    aes = AES.new(key, AES.MODE_ECB)
+    return aes.decrypt(ciphertext).decode('UTF-8')
 
 if __name__ == "__main__":
-    key = "secretaa"
+    # key is 128 bits - 16 bytes
+    key = Random.new().read(16)
+
+    print("key: %s" % key.encode('hex'))
+
     plaintext = "This is the secret message we want to encrypt"
 
-    print("length of plaintext: %o" % len(plaintext))
-    print("plaintext: %s" %)
+    print("length of plaintext: %d" % len(plaintext))
+    print("plaintext: %s" % plaintext)
 
     paddedtext = append_space_padding(plaintext)
 
